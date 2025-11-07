@@ -37,9 +37,9 @@ For **whisper-cpp** on Windows, download from: https://github.com/ggml-org/whisp
 1. **Clone the repository**
 
    ```bash
-   cd /path/to/your/projects
-   git clone <your-repo-url>
-   cd local-wisprflow-backend
+   cd /project
+   git clone https://github.com/avayyyyyyy/local-wisprflow.git
+   cd local-wisprflow
    ```
 
 2. **Install dependencies**
