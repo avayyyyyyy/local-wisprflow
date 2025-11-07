@@ -82,7 +82,12 @@ async function transcribeAudio(audioFile: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const modelPath = path.join(process.cwd(), "ggml-base.bin");
 
-    const whisperProcess = spawn("whisper-cli", [
+    // Create a full, absolute path to the executable in your project root.
+    // 'process.cwd()' gets the current working directory (your project folder).
+    const whisperBinaryPath = path.join(process.cwd(), "whisper-cli");
+
+    // Use that full path in the spawn command.
+    const whisperProcess = spawn(whisperBinaryPath, [
       audioFile,
       "--model",
       modelPath,
@@ -97,6 +102,12 @@ async function transcribeAudio(audioFile: string): Promise<string> {
       "0.0",
     ]);
 
+    let stderrOutput = "";
+    whisperProcess.stderr.on("data", (data) => {
+      console.log("Whisper STDERR:", data.toString());
+      stderrOutput += data.toString();
+    });
+
     whisperProcess.on("close", (code: number) => {
       if (code === 0) {
         const txtFile = `${audioFile}.txt`;
@@ -108,7 +119,7 @@ async function transcribeAudio(audioFile: string): Promise<string> {
           resolve("No speech detected");
         }
       } else {
-        reject(new Error(`Whisper failed with code ${code}`));
+        reject(new Error(`Whisper failed with code ${code}. Log: ${stderrOutput}`));
       }
     });
 
@@ -165,11 +176,9 @@ app.post("/transcribe", async (req: Request, res: Response) => {
         },
       });
     } else {
-      res
-        .status(400)
-        .json({
-          error: "Unsupported content type. Use audio/webm or audio/pcm",
-        });
+      res.status(400).json({
+        error: "Unsupported content type. Use audio/webm or audio/pcm",
+      });
     }
   } catch (error) {
     console.error("Transcription error:", error);

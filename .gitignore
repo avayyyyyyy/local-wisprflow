@@ -3,3 +3,4 @@ dist/
 .env
 *.bin
 /bin
+*.wav
