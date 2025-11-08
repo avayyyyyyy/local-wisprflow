@@ -5,6 +5,8 @@ import { spawn } from "child_process";
 
 const app = express();
 
+const WHISPER_CLI_PATH = "~/whisper.cpp/build/bin/whisper-cli";
+
 app.use(express.raw({ type: "audio/pcm", limit: "50mb" }));
 app.use(express.raw({ type: "audio/webm", limit: "50mb" }));
 
@@ -82,11 +84,11 @@ async function transcribeAudio(audioFile: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const modelPath = path.join(process.cwd(), "ggml-base.bin");
 
-    // Create a full, absolute path to the executable in your project root.
-    // 'process.cwd()' gets the current working directory (your project folder).
-    const whisperBinaryPath = path.join(process.cwd(), "whisper-cli");
+    const whisperBinaryPath = path.join(
+      process.env.HOME || "~",
+      "whisper.cpp/build/bin/whisper-cli"
+    );
 
-    // Use that full path in the spawn command.
     const whisperProcess = spawn(whisperBinaryPath, [
       audioFile,
       "--model",
@@ -121,7 +123,9 @@ async function transcribeAudio(audioFile: string): Promise<string> {
           resolve("No speech detected");
         }
       } else {
-        reject(new Error(`Whisper failed with code ${code}. Log: ${stderrOutput}`));
+        reject(
+          new Error(`Whisper failed with code ${code}. Log: ${stderrOutput}`)
+        );
       }
     });
 
