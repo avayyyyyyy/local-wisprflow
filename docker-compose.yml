@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  wisprflow:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wisprflow-backend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+
+  # Optional: Add volume for model persistence
+  # volumes:
+  #   - ./ggml-base.bin:/app/ggml-base.bin:ro

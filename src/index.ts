@@ -91,6 +91,8 @@ async function transcribeAudio(audioFile: string): Promise<string> {
       audioFile,
       "--model",
       modelPath,
+      "--threads",
+      "8",
       "--output-txt",
       "--language",
       "en",

@@ -88,10 +88,16 @@ export class AudioCapture {
     return new Promise((resolve, reject) => {
       const modelPath = path.join(process.cwd(), "ggml-base.bin");
 
-      const whisperProcess = spawn("whisper-cli", [
+      // Create a full, absolute path to the executable in your project root.
+      const whisperBinaryPath = path.join(process.cwd(), "whisper-cli");
+
+      // Use that full path in the spawn command with performance optimizations.
+      const whisperProcess = spawn(whisperBinaryPath, [
         audioFile,
         "--model",
         modelPath,
+        "--threads",
+        "8", // Use more CPU threads for faster processing
         "--output-txt",
         "--language",
         "en",
@@ -102,6 +108,12 @@ export class AudioCapture {
         "--temperature",
         "0.0",
       ]);
+
+      let stderrOutput = "";
+      whisperProcess.stderr.on("data", (data) => {
+        console.log("Whisper STDERR:", data.toString());
+        stderrOutput += data.toString();
+      });
 
       whisperProcess.on("close", (code: number) => {
         if (code === 0) {

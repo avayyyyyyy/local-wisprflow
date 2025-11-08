@@ -1,0 +1,55 @@
+# Node modules
+node_modules/
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+
+# TypeScript build output
+dist/
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Temporary files
+temp_*.wav
+temp_*.webm
+temp_*.txt
+recording.wav
+*.log
+
+# Documentation (unless needed)
+README.md
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Test files
+test/
+*.test.ts
+*.spec.ts
+
+# Whisper.cpp build files (we build in Docker)
+whisper.cpp/
+build/
+
+# Exclude local whisper-cli binary (macOS version)
+whisper-cli

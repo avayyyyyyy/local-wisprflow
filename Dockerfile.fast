@@ -1,0 +1,59 @@
+# Optimized Dockerfile for MAXIMUM SPEED using tiny model
+# 3x faster than base model with slight accuracy tradeoff
+# Use: docker build -f Dockerfile.fast -t wisprflow-backend-fast .
+
+FROM debian:bookworm-slim AS whisper-builder
+
+RUN apt-get update && apt-get install -y \
+    git \
+    cmake \
+    build-essential \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+RUN git clone https://github.com/ggerganov/whisper.cpp.git
+WORKDIR /build/whisper.cpp
+
+# Build with aggressive optimizations
+RUN mkdir build && cd build && \
+    cmake .. \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DGGML_NATIVE=OFF \
+        -DGGML_CPU_ARM_ARCH=armv8-a \
+        -DGGML_OPENMP=ON \
+        -DCMAKE_C_FLAGS="-O3 -march=armv8-a" \
+        -DCMAKE_CXX_FLAGS="-O3 -march=armv8-a" && \
+    cmake --build . --config Release -j$(nproc)
+
+FROM node:20-slim
+
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY --from=whisper-builder /build/whisper.cpp/build/bin/whisper-cli /app/whisper-cli
+COPY --from=whisper-builder /build/whisper.cpp/build/src/libwhisper.so* /usr/local/lib/
+COPY --from=whisper-builder /build/whisper.cpp/build/ggml/src/*.so* /usr/local/lib/
+RUN chmod +x /app/whisper-cli && ldconfig
+
+COPY package.json pnpm-lock.yaml ./
+RUN npm install -g pnpm && pnpm install --frozen-lockfile
+
+COPY . .
+
+# Download TINY model for maximum speed (75MB vs 147MB)
+RUN echo "Downloading Whisper TINY model for maximum speed..." && \
+    curl -L https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.bin -o ggml-base.bin
+
+RUN pnpm build
+
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:3000/ || exit 1
+
+CMD ["node", "dist/index.js"]
